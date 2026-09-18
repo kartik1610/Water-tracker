@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HydroTap - Water Intake Tracker</title>
+  <title>HydroTap - Smart Water Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -11,40 +11,36 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #0f172a;
+      background-color: #0b1329;
       color: #f8fafc;
     }
     .glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
+      background: rgba(23, 37, 84, 0.4);
+      backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .wave-bg {
-      background: linear-gradient(180deg, rgba(14, 165, 233, 0.15) 0%, rgba(15, 23, 42, 0) 100%);
     }
     .water-fill {
       transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .btn-press:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
     }
-    /* Toast Animation */
-    @keyframes slideUp {
+    @keyframes toastUp {
       from { transform: translateY(100%) translateX(-50%); opacity: 0; }
       to { transform: translateY(0) translateX(-50%); opacity: 1; }
     }
     .toast-anim {
-      animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      animation: toastUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between pb-10 wave-bg">
+<body class="min-h-screen flex flex-col justify-between pb-10 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950">
 
-  <!-- Toast Notification Container -->
+  <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden toast-anim">
-    <div class="bg-cyan-500 text-slate-950 font-bold px-6 py-3 rounded-full shadow-lg shadow-cyan-500/30 flex items-center gap-3 border border-cyan-300">
+    <div class="bg-cyan-400 text-slate-950 font-extrabold px-6 py-3 rounded-full shadow-lg shadow-cyan-500/30 flex items-center gap-3 border border-cyan-200">
       <i class="fa-solid fa-circle-check text-lg"></i>
-      <span id="toast-message">Water logged successfully!</span>
+      <span id="toast-message">Water logged!</span>
     </div>
   </div>
 
@@ -53,24 +49,24 @@
     <!-- Top Bar -->
     <header class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
+        <div class="w-10 h-10 rounded-2xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
           <i class="fa-solid fa-droplet text-xl"></i>
         </div>
         <div>
-          <h1 class="font-extrabold text-xl leading-none text-white">HydroTap</h1>
-          <p class="text-xs text-slate-400 mt-1">NFC Smart Hydration</p>
+          <h1 class="font-extrabold text-xl leading-none text-white tracking-tight">HydroTap</h1>
+          <p class="text-xs text-slate-400 mt-1">Smart NFC Hydration Tracker</p>
         </div>
       </div>
-      <button onclick="toggleSettingsModal()" class="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 transition btn-press">
+      <button onclick="toggleSettingsModal()" class="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-slate-300 hover:text-white transition btn-press">
         <i class="fa-solid fa-gear"></i>
       </button>
     </header>
 
     <!-- Main Hydration Visualizer -->
-    <section class="glass-card rounded-3xl p-6 relative overflow-hidden flex flex-col items-center">
+    <section class="glass-card rounded-3xl p-6 relative overflow-hidden flex flex-col items-center shadow-2xl">
       
       <!-- Bottle Visual -->
-      <div class="relative w-36 h-64 bg-slate-800/80 rounded-3xl border-4 border-slate-700/60 overflow-hidden my-2 flex flex-col justify-end shadow-inner">
+      <div class="relative w-36 h-60 bg-slate-900/80 rounded-3xl border-4 border-slate-700/60 overflow-hidden my-2 flex flex-col justify-end shadow-inner">
         <!-- Scale markers -->
         <div class="absolute inset-0 flex flex-col justify-between p-3 opacity-30 pointer-events-none z-10 text-[10px] font-mono font-bold text-slate-300">
           <div class="border-b border-dashed border-white/50 w-full flex justify-between"><span>100%</span></div>
@@ -92,27 +88,29 @@
           <span id="current-intake" class="text-4xl font-black text-white">0</span>
           <span class="text-slate-400 font-semibold text-lg">/ <span id="target-intake">2500</span> ml</span>
         </div>
-        <p id="percentage-text" class="text-sm font-semibold text-cyan-400 mt-0.5">0% of daily goal completed</p>
+        <p id="percentage-text" class="text-xs font-semibold text-cyan-400 mt-1 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 inline-block">
+          0% of daily goal completed
+        </p>
       </div>
     </section>
 
-    <!-- Quick Manual Entry & Custom Log -->
+    <!-- Quick Manual Entry -->
     <section class="space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Quick Log</h2>
       <div class="grid grid-cols-3 gap-3">
         <button onclick="logWater(250)" class="glass-card p-4 rounded-2xl flex flex-col items-center hover:border-cyan-500/50 transition btn-press group">
           <i class="fa-solid fa-glass-water text-cyan-400 text-xl mb-1 group-hover:scale-110 transition"></i>
-          <span class="font-bold text-sm">250 ml</span>
+          <span class="font-bold text-sm text-white">250 ml</span>
           <span class="text-[10px] text-slate-400">Glass</span>
         </button>
         <button onclick="logWater(500)" class="glass-card p-4 rounded-2xl flex flex-col items-center hover:border-cyan-500/50 transition btn-press group">
           <i class="fa-solid fa-bottle-water text-cyan-400 text-xl mb-1 group-hover:scale-110 transition"></i>
-          <span class="font-bold text-sm">500 ml</span>
+          <span class="font-bold text-sm text-white">500 ml</span>
           <span class="text-[10px] text-slate-400">Bottle</span>
         </button>
         <button onclick="logWater(750)" class="glass-card p-4 rounded-2xl flex flex-col items-center hover:border-cyan-500/50 transition btn-press group">
-          <i class="fa-solid fa-[#ffffff] text-cyan-400 text-xl mb-1 fa-faucet-drip group-hover:scale-110 transition"></i>
-          <span class="font-bold text-sm">750 ml</span>
+          <i class="fa-solid fa-faucet-drip text-cyan-400 text-xl mb-1 group-hover:scale-110 transition"></i>
+          <span class="font-bold text-sm text-white">750 ml</span>
           <span class="text-[10px] text-slate-400">Large</span>
         </button>
       </div>
@@ -120,42 +118,47 @@
       <!-- Custom Amount Input -->
       <div class="glass-card p-2.5 rounded-2xl flex items-center gap-2">
         <input type="number" id="custom-ml" placeholder="Enter custom ml..." class="bg-transparent px-3 py-2 text-sm focus:outline-none w-full font-semibold text-white placeholder-slate-500">
-        <button onclick="logCustomWater()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition btn-press whitespace-nowrap">
+        <button onclick="logCustomWater()" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition btn-press whitespace-nowrap">
           + Add
         </button>
       </div>
     </section>
 
-    <!-- NFC Tag Link Builder Section -->
+    <!-- NFC URL Builder -->
     <section class="glass-card rounded-3xl p-5 space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-nfc-symbol text-cyan-400 text-lg"></i>
-          <h2 class="font-bold text-base text-white">NFC Link Builder</h2>
+          <h2 class="font-bold text-base text-white">NFC URL Generator</h2>
         </div>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">GitHub Ready</span>
       </div>
 
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Generate the exact URL to write onto your bottle's NFC tag. Tapping it will automatically log water when opened.
-      </p>
+      <!-- Preset Selector -->
+      <div class="flex gap-2">
+        <button onclick="setHostingPreset('gitlab')" class="flex-1 py-1.5 px-3 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5">
+          <i class="fa-brands fa-gitlab text-orange-500"></i> GitLab
+        </button>
+        <button onclick="setHostingPreset('github')" class="flex-1 py-1.5 px-3 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5">
+          <i class="fa-brands fa-github text-white"></i> GitHub
+        </button>
+      </div>
 
       <div class="space-y-3">
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Base App URL</label>
-          <input type="text" id="builder-base-url" value="https://kartik1610.github.io/water-tracker/" class="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500">
+          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Your Hosted Site Base URL</label>
+          <input type="text" id="builder-base-url" value="https://kartik1610.github.io/water-tracker/" class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500">
         </div>
 
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Amount to log per tap (ml)</label>
-          <input type="number" id="builder-ml" value="500" oninput="updateGeneratedUrl()" class="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-cyan-500">
+          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Amount to log on NFC tap (ml)</label>
+          <input type="number" id="builder-ml" value="500" oninput="updateGeneratedUrl()" class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-cyan-500">
         </div>
 
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Generated URL for NFC Tag</label>
+          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Copy & Write this to NFC Tag</label>
           <div class="flex gap-2">
             <input type="text" id="builder-output" readonly class="w-full bg-slate-900 border border-cyan-500/40 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none">
-            <button onclick="copyGeneratedUrl()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition btn-press flex items-center gap-1.5 whitespace-nowrap">
+            <button onclick="copyGeneratedUrl()" class="bg-cyan-400 hover:bg-cyan-300 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition btn-press flex items-center gap-1.5 whitespace-nowrap">
               <i class="fa-regular fa-copy"></i>
               <span>Copy</span>
             </button>
@@ -167,12 +170,11 @@
     <!-- History Logs -->
     <section class="glass-card rounded-3xl p-5 space-y-3">
       <div class="flex items-center justify-between">
-        <h2 class="font-bold text-base text-white">Today's Activity</h2>
+        <h2 class="font-bold text-base text-white">Today's Logs</h2>
         <button onclick="clearTodayHistory()" class="text-xs text-slate-400 hover:text-red-400 transition">Clear Today</button>
       </div>
 
       <div id="history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-        <!-- Dynamic logs inserted here -->
         <p id="empty-history" class="text-xs text-slate-500 text-center py-4">No water logged yet today.</p>
       </div>
     </section>
@@ -183,88 +185,76 @@
   <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="glass-card max-w-sm w-full rounded-3xl p-6 space-y-4 border border-slate-700">
       <div class="flex items-center justify-between">
-        <h3 class="font-bold text-lg text-white">Hydration Settings</h3>
+        <h3 class="font-bold text-lg text-white">Settings</h3>
         <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       
       <div>
-        <label class="text-xs font-semibold text-slate-400 block mb-1">Daily Water Goal (ml)</label>
+        <label class="text-xs font-semibold text-slate-400 block mb-1">Daily Target (ml)</label>
         <input type="number" id="goal-input" value="2500" class="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
       </div>
 
       <div class="pt-2 flex justify-end gap-2">
         <button onclick="toggleSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800">Cancel</button>
-        <button onclick="saveSettings()" class="bg-cyan-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-cyan-400">Save</button>
+        <button onclick="saveSettings()" class="bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-cyan-300">Save</button>
       </div>
     </div>
   </div>
 
   <script>
-    // App State
     let currentGoal = parseInt(localStorage.getItem('hydroGoal')) || 2500;
     let logs = JSON.parse(localStorage.getItem('hydroLogs')) || [];
 
-    // Audio Context Setup
-    const playChime = () => {
+    const playSound = () => {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
-      } catch (e) {
-        console.log('Audio error:', e);
-      }
+      } catch (e) { console.log(e); }
     };
 
-    // Initialize App
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('target-intake').innerText = currentGoal;
       document.getElementById('goal-input').value = currentGoal;
 
-      // Handle URL Parameters from NFC Taps
-      checkUrlParams();
+      // Auto detect domain if running live
+      if (window.location.protocol.startsWith('http')) {
+        document.getElementById('builder-base-url').value = window.location.origin + window.location.pathname;
+      }
 
-      // Render Dashboard
+      checkUrlParams();
       renderDashboard();
 
-      // Setup URL Builder listener
       document.getElementById('builder-base-url').addEventListener('input', updateGeneratedUrl);
       updateGeneratedUrl();
     });
 
-    // Check URL parameters for auto-logging
     function checkUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
       const mlParam = urlParams.get('ml');
-      const autoLogParam = urlParams.get('autoLog');
-
       if (mlParam) {
         const amount = parseInt(mlParam);
         if (!isNaN(amount) && amount > 0) {
           logWater(amount, 'NFC Tag Tap');
           cleanUrl();
         }
-      } else if (autoLogParam === 'true') {
-        logWater(500, 'NFC Tag Tap');
-        cleanUrl();
       }
     }
 
-    // Clean URL query parameters without reloading
     function cleanUrl() {
-      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      const clean = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: clean }, '', clean);
     }
 
-    // Get today's total logged water
     function getTodayTotal() {
       const todayStr = new Date().toDateString();
       return logs
@@ -272,7 +262,6 @@
         .reduce((sum, item) => sum + item.amount, 0);
     }
 
-    // Render Progress and Logs
     function renderDashboard() {
       const todayTotal = getTodayTotal();
       document.getElementById('current-intake').innerText = todayTotal;
@@ -284,7 +273,6 @@
       renderLogs();
     }
 
-    // Render Log List
     function renderLogs() {
       const historyContainer = document.getElementById('history-list');
       const todayStr = new Date().toDateString();
@@ -314,7 +302,6 @@
       }).join('');
     }
 
-    // Log Water Function
     function logWater(amount, source = 'Manual Entry') {
       const newEntry = {
         id: Date.now(),
@@ -326,18 +313,13 @@
       logs.push(newEntry);
       localStorage.setItem('hydroLogs', JSON.stringify(logs));
 
-      playChime();
+      playSound();
       showToast(`+${amount} ml logged!`);
       renderDashboard();
 
-      // Trigger celebration if goal is reached
       const totalNow = getTodayTotal();
       if (totalNow >= currentGoal && (totalNow - amount) < currentGoal) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
     }
 
@@ -358,14 +340,22 @@
       showToast('Today\'s logs cleared');
     }
 
-    // URL Builder Logic
+    function setHostingPreset(type) {
+      const baseUrlInput = document.getElementById('builder-base-url');
+      if (type === 'gitlab') {
+        baseUrlInput.value = 'https://username.gitlab.io/water-tracker/';
+      } else {
+        baseUrlInput.value = 'https://kartik1610.github.io/water-tracker/';
+      }
+      updateGeneratedUrl();
+    }
+
     function updateGeneratedUrl() {
       const baseUrl = document.getElementById('builder-base-url').value.trim();
       const ml = document.getElementById('builder-ml').value.trim() || '500';
       const output = document.getElementById('builder-output');
-
-      const urlSeparator = baseUrl.includes('?') ? '&' : '?';
-      output.value = `${baseUrl}${urlSeparator}ml=${ml}`;
+      const sep = baseUrl.includes('?') ? '&' : '?';
+      output.value = `${baseUrl}${sep}ml=${ml}`;
     }
 
     function copyGeneratedUrl() {
@@ -375,20 +365,15 @@
       showToast('NFC URL copied to clipboard!');
     }
 
-    // UI Toast Notification
     function showToast(message) {
       const toast = document.getElementById('toast');
       document.getElementById('toast-message').innerText = message;
       toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2500);
+      setTimeout(() => { toast.classList.add('hidden'); }, 2500);
     }
 
-    // Settings Modal Functions
     function toggleSettingsModal() {
-      const modal = document.getElementById('settings-modal');
-      modal.classList.toggle('hidden');
+      document.getElementById('settings-modal').classList.toggle('hidden');
     }
 
     function saveSettings() {
