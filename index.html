@@ -3,208 +3,301 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HydroQuest - RPG Water Tracker</title>
+  <title>HydroRider - Water Tracker HUD</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+
+    :root {
+      --orange-accent: #f25c05;
+      --orange-glow: #ff7a00;
+    }
+
     body {
-      font-family: 'VT323', monospace;
-      background-color: #0f172a;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #070a12;
       color: #f8fafc;
-      font-size: 1.25rem;
-      letter-spacing: 0.5px;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(242, 92, 5, 0.15), transparent 75%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 20px 20px, 20px 20px;
     }
 
-    /* Retro Pixel UI Borders */
-    .pixel-box {
-      border: 4px solid #38bdf8;
-      background: #1e293b;
-      box-shadow: 6px 6px 0px #0284c7;
+    .font-hud { font-family: 'Orbitron', sans-serif; }
+
+    /* Modern Glass HUD Cards */
+    .moto-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(242, 92, 5, 0.3);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
     }
 
-    .pixel-box-gold {
-      border: 4px solid #f59e0b;
-      background: #1e293b;
-      box-shadow: 6px 6px 0px #d97706;
+    .moto-card-gold {
+      background: rgba(30, 27, 75, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.9);
+      border-radius: 20px;
     }
 
-    .pixel-btn {
-      border: 3px solid #ffffff;
-      background: #0284c7;
+    /* Moto Throttle Buttons */
+    .moto-btn {
+      background: linear-gradient(135deg, rgba(242, 92, 5, 0.25), rgba(180, 50, 0, 0.45));
+      border: 1px solid rgba(242, 92, 5, 0.6);
+      color: #ff9d5c;
+      box-shadow: 0 4px 14px rgba(242, 92, 5, 0.25);
+      border-radius: 14px;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .moto-btn:active {
+      transform: scale(0.96);
+      background: rgba(242, 92, 5, 0.6);
       color: #ffffff;
-      box-shadow: 4px 4px 0px #000000;
-      transition: all 0.1s;
+      box-shadow: 0 0 20px rgba(242, 92, 5, 0.8);
     }
 
-    .pixel-btn:active {
-      transform: translate(3px, 3px);
-      box-shadow: 1px 1px 0px #000000;
+    .glow-orange { text-shadow: 0 0 14px rgba(242, 92, 5, 0.8); }
+
+    /* Speedo Ring Gauge */
+    .gauge-progress {
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .pixel-bar {
-      border: 2px solid #ffffff;
-      background: #000000;
-      padding: 2px;
+    /* Loading Screen Overlay */
+    #ignition-loader {
+      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
     }
 
-    /* Pixelated Toast */
-    @keyframes pixelSlide {
+    @keyframes needleSweep {
+      0% { transform: rotate(-120deg); }
+      50% { transform: rotate(120deg); }
+      100% { transform: rotate(-120deg); }
+    }
+
+    .needle-anim {
+      transform-origin: bottom center;
+      animation: needleSweep 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(242, 92, 5, 0.8)); }
+      50% { filter: drop-shadow(0 0 20px rgba(255, 122, 0, 1)); }
+    }
+
+    .pulse-orange { animation: pulseGlow 1.5s infinite; }
+
+    @keyframes slideUp {
       from { transform: translateY(100%) translateX(-50%); opacity: 0; }
       to { transform: translateY(0) translateX(-50%); opacity: 1; }
     }
-    .toast-anim {
-      animation: pixelSlide 0.2s steps(4) forwards;
-    }
+    .toast-anim { animation: slideUp 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
   </style>
 </head>
-<body class="min-h-screen p-4 max-w-md mx-auto flex flex-col justify-between pb-8">
+<body class="min-h-screen p-4 max-w-md mx-auto flex flex-col justify-between pb-8 relative">
 
-  <!-- Toast Alert -->
+  <!-- ENGINE IGNITION LOADING OVERLAY -->
+  <div id="ignition-loader" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+    <div class="relative mb-6">
+      <!-- Modern Roadster Vector Icon -->
+      <svg class="w-40 h-28 text-[#f25c05] pulse-orange" viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="22" cy="52" r="13" stroke-width="3.5" />
+        <circle cx="22" cy="52" r="7" stroke-width="1.5" />
+        <circle cx="98" cy="52" r="13" stroke-width="3.5" />
+        <circle cx="98" cy="52" r="7" stroke-width="1.5" />
+        <path d="M 32 38 C 38 28, 48 24, 62 25 L 68 34 L 38 38 Z" fill="#f25c05" fill-opacity="0.9" stroke="#f25c05" stroke-width="2" />
+        <path d="M 62 25 C 72 25, 82 30, 88 40 L 45 42 Z" fill="#1e293b" stroke="currentColor" stroke-width="2" />
+        <path d="M 32 38 L 22 52 M 98 52 L 85 36 M 52 42 L 52 52 M 68 34 L 75 52" />
+        <circle cx="106" cy="30" r="5" fill="#ffffff" fill-opacity="0.3" stroke="currentColor" stroke-width="2" />
+        <path d="M 98 30 L 88 22 L 78 22" stroke-width="2" />
+        <circle cx="76" cy="19" r="2.5" stroke-width="2" />
+        <path d="M 70 38 L 88 32 M 88 32 L 95 35" stroke-width="2.5" />
+      </svg>
+      <!-- Tachometer Needle Sweep -->
+      <div class="w-16 h-1 bg-[#f25c05] rounded-full mx-auto needle-anim shadow-[0_0_10px_#f25c05]"></div>
+    </div>
+    <div class="font-hud text-[#f25c05] text-lg font-black tracking-widest glow-orange mb-1">RIDER HUD</div>
+    <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Starting Engine & Telemetry...</div>
+  </div>
+
+  <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden toast-anim">
-    <div class="bg-amber-400 text-slate-950 font-bold px-6 py-2 border-4 border-black box-shadow shadow-[4px_4px_0px_#000] flex items-center gap-2 text-xl">
-      <i class="fa-solid fa-trophy"></i>
-      <span id="toast-message">QUEST COMPLETE!</span>
+    <div class="bg-slate-950 text-[#f25c05] font-hud font-bold px-6 py-2.5 rounded-full border border-[#f25c05] shadow-[0_0_20px_rgba(242,92,5,0.6)] flex items-center gap-2.5 text-xs tracking-wider">
+      <i class="fa-solid fa-gauge-high text-amber-400"></i>
+      <span id="toast-message">FUEL ADDED!</span>
     </div>
   </div>
 
-  <div class="space-y-5">
+  <div class="space-y-4">
     
-    <!-- Player Stats Header -->
-    <header class="pixel-box p-4 space-y-2">
-      <div class="flex justify-between items-center text-2xl">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-cyan-400"></i>
-          <span class="text-cyan-300 font-bold">HERO STATS</span>
+    <!-- Header with Rider Greeting & Custom Roadster Vector Artwork -->
+    <header class="moto-card p-4 flex justify-between items-center relative overflow-hidden">
+      <div class="flex items-center gap-3 z-10">
+        <div class="w-12 h-12 rounded-2xl bg-[#f25c05]/20 border border-[#f25c05]/50 flex items-center justify-center text-[#f25c05] p-2 shadow-[0_0_15px_rgba(242,92,5,0.3)]">
+          <!-- Custom Roadster Icon -->
+          <svg class="w-full h-full text-[#f25c05]" viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="22" cy="52" r="13" stroke-width="4" />
+            <circle cx="98" cy="52" r="13" stroke-width="4" />
+            <path d="M 32 38 C 38 28, 48 24, 62 25 L 68 34 L 38 38 Z" fill="#f25c05" stroke="#f25c05" stroke-width="2" />
+            <path d="M 62 25 C 72 25, 82 30, 88 40 L 45 42 Z" fill="#1e293b" stroke="currentColor" stroke-width="2" />
+            <circle cx="106" cy="30" r="5" stroke="currentColor" stroke-width="2" />
+            <path d="M 98 30 L 88 22 L 78 22" stroke-width="2.5" />
+          </svg>
         </div>
-        <span id="player-level" class="text-amber-400 font-bold">LVL 1</span>
-      </div>
-
-      <!-- Health Hearts -->
-      <div class="flex items-center justify-between pt-1">
-        <span class="text-sm text-slate-400">HP (HYDRATION):</span>
-        <div id="hearts-container" class="flex gap-1 text-red-500 text-lg">
-          <i class="fa-regular fa-heart"></i>
-          <i class="fa-regular fa-heart"></i>
-          <i class="fa-regular fa-heart"></i>
-          <i class="fa-regular fa-heart"></i>
-          <i class="fa-regular fa-heart"></i>
+        <div>
+          <p class="text-[10px] font-hud text-[#f25c05] tracking-widest font-bold">ROADSTER TELEMETRY</p>
+          <h1 class="text-xl font-extrabold text-white tracking-tight leading-none">HELLO KARTIK</h1>
         </div>
       </div>
 
-      <!-- XP Bar -->
-      <div class="space-y-1">
-        <div class="flex justify-between text-xs text-slate-400">
-          <span>EXP POINTS</span>
-          <span id="xp-text">0 / 500 XP</span>
-        </div>
-        <div class="pixel-bar">
-          <div id="xp-bar" class="bg-amber-400 h-3 transition-all duration-300" style="width: 0%;"></div>
-        </div>
+      <div class="text-right z-10">
+        <span id="rider-rank" class="text-xs font-hud font-bold text-[#f25c05] block">GEAR 1</span>
+        <span class="text-[9px] text-slate-400 font-bold uppercase">Ready to Ride</span>
       </div>
+
+      <!-- Roadster Background Graphic -->
+      <svg class="absolute -right-3 -bottom-3 w-32 h-20 text-[#f25c05]/10 pointer-events-none" viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="22" cy="52" r="13" stroke-width="4" />
+        <circle cx="98" cy="52" r="13" stroke-width="4" />
+        <path d="M 32 38 C 38 28, 48 24, 62 25 L 68 34 L 38 38 Z" fill="currentColor" />
+        <path d="M 62 25 C 72 25, 82 30, 88 40 L 45 42 Z" fill="currentColor" />
+        <circle cx="106" cy="30" r="5" stroke="currentColor" stroke-width="2" />
+        <path d="M 98 30 L 88 22 L 78 22" stroke-width="2" />
+      </svg>
     </header>
 
-    <!-- Main Quest Card -->
-    <section class="pixel-box p-5 text-center space-y-4">
-      <div class="text-cyan-300 text-xl font-bold tracking-wider">[ DAILY WATER QUEST ]</div>
-
-      <!-- Main Water Gauge -->
-      <div class="py-2">
-        <div id="current-intake" class="text-5xl font-extrabold text-white tracking-wider">0 ML</div>
-        <div class="text-sm text-slate-400 mt-1">TARGET: <span id="target-intake">2500</span> ML</div>
+    <!-- SECTION 1: Tachometer / Intake Gauge -->
+    <section class="moto-card p-5 text-center relative overflow-hidden flex flex-col items-center">
+      <div class="w-full flex justify-between items-center text-[10px] font-hud text-slate-400 tracking-widest uppercase">
+        <span>[ TACHO_HYDRATION ]</span>
+        <span class="text-[#f25c05] animate-pulse">● IGNITION ON</span>
       </div>
 
-      <!-- Pixelated Progress Bar -->
-      <div class="pixel-bar">
-        <div id="water-bar" class="bg-cyan-400 h-7 transition-all duration-500 flex items-center justify-center text-xs font-bold text-slate-950" style="width: 0%;">
-          <span id="percentage-text">0%</span>
+      <!-- Tachometer Circular Gauge -->
+      <div class="relative flex items-center justify-center my-3">
+        <svg class="w-48 h-48">
+          <circle cx="96" cy="96" r="76" stroke="#0f172a" stroke-width="12" fill="transparent"/>
+          <circle id="gauge-bar" cx="96" cy="96" r="76" stroke="#f25c05" stroke-width="12" fill="transparent"
+                  stroke-dasharray="477" stroke-dashoffset="477" stroke-linecap="round" class="gauge-progress filter drop-shadow-[0_0_10px_rgba(242,92,5,0.8)]"/>
+        </svg>
+
+        <div class="absolute text-center flex flex-col items-center">
+          <i class="fa-solid fa-droplet text-[#f25c05] text-xl mb-1 animate-bounce"></i>
+          <div id="current-intake" class="text-4xl font-hud font-black text-white glow-orange tracking-tight leading-none">0 ML</div>
+          <div class="text-xs font-bold text-slate-400 tracking-wider mt-1">TANK CAP: <span id="target-intake" class="text-slate-200">2500</span> ML</div>
+          <div id="percentage-text" class="text-[10px] font-hud text-[#f25c05] mt-1 font-bold">0% FULFILLED</div>
         </div>
       </div>
     </section>
 
-    <!-- Item Inventory (Quick Log) -->
+    <!-- SECTION 2: Analytics Chart (Clean Day/Week/Month Analytics) -->
+    <section class="moto-card p-4 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <span class="text-[#f25c05] text-xs font-hud font-bold tracking-widest flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>RIDE TELEMETRY</span>
+        </span>
+
+        <!-- Filter Buttons -->
+        <div class="flex gap-1 text-[10px] font-bold">
+          <button onclick="setChartMode('day')" id="btn-day" class="px-2.5 py-1 bg-[#f25c05] text-white rounded-lg">DAY</button>
+          <button onclick="setChartMode('week')" id="btn-week" class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg">WEEK</button>
+          <button onclick="setChartMode('month')" id="btn-month" class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg">MONTH</button>
+        </div>
+      </div>
+
+      <!-- Chart Canvas -->
+      <div class="h-44 relative">
+        <canvas id="telemetryChart"></canvas>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Quick Actions -->
     <section class="space-y-2">
-      <div class="text-sm text-slate-400 font-bold px-1">> USE POTIONS (QUICK LOG)</div>
-      <div class="grid grid-cols-3 gap-3">
-        <button onclick="logWater(250)" class="pixel-btn p-3 text-center">
-          <i class="fa-solid fa-flask text-cyan-300 text-xl block mb-1"></i>
-          <span class="text-lg font-bold">+250 ML</span>
-          <span class="text-xs block text-cyan-100">Small Potion</span>
+      <div class="text-xs font-hud font-bold text-slate-400 tracking-widest px-1 uppercase">> REFUEL_PODS</div>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="logWater(250)" class="moto-btn p-3 text-center">
+          <i class="fa-solid fa-glass-water text-[#f25c05] text-lg block mb-1"></i>
+          <span class="font-hud font-bold text-xs block leading-none">+250 ML</span>
+          <span class="text-[10px] text-slate-300 font-bold uppercase mt-1 block">Pit Stop</span>
         </button>
-        <button onclick="logWater(500)" class="pixel-btn p-3 text-center">
-          <i class="fa-solid fa-[#ffffff] fa-wine-bottle text-amber-300 text-xl block mb-1"></i>
-          <span class="text-lg font-bold">+500 ML</span>
-          <span class="text-xs block text-cyan-100">Elixir Bottle</span>
+        <button onclick="logWater(500)" class="moto-btn p-3 text-center">
+          <i class="fa-solid fa-bottle-water text-[#f25c05] text-lg block mb-1"></i>
+          <span class="font-hud font-bold text-xs block leading-none">+500 ML</span>
+          <span class="text-[10px] text-slate-300 font-bold uppercase mt-1 block">Full Tank</span>
         </button>
-        <button onclick="logWater(750)" class="pixel-btn p-3 text-center">
-          <i class="fa-solid fa-jar text-emerald-300 text-xl block mb-1"></i>
-          <span class="text-lg font-bold">+750 ML</span>
-          <span class="text-xs block text-cyan-100">Mega Jug</span>
+        <button onclick="logWater(750)" class="moto-btn p-3 text-center">
+          <i class="fa-solid fa-faucet-drip text-[#f25c05] text-lg block mb-1"></i>
+          <span class="font-hud font-bold text-xs block leading-none">+750 ML</span>
+          <span class="text-[10px] text-slate-300 font-bold uppercase mt-1 block">Nitro Surge</span>
         </button>
       </div>
 
       <!-- Custom ML Input -->
-      <div class="pixel-box p-2 flex items-center gap-2">
-        <input type="number" id="custom-ml" placeholder="Custom XP / ML..." class="bg-transparent px-2 py-1 text-lg focus:outline-none w-full text-white placeholder-slate-500">
-        <button onclick="logCustomWater()" class="pixel-btn px-4 py-1 text-lg font-bold whitespace-nowrap">
-          + DRINK
+      <div class="moto-card p-2 flex items-center gap-2">
+        <input type="number" id="custom-ml" placeholder="Enter custom ML..." class="bg-transparent px-3 py-1.5 text-sm focus:outline-none w-full text-white font-bold placeholder-slate-500 font-hud">
+        <button onclick="logCustomWater()" class="moto-btn px-4 py-1.5 text-xs font-hud font-bold whitespace-nowrap">
+          + REFUEL
         </button>
       </div>
     </section>
 
-    <!-- Achievements Section -->
-    <section class="pixel-box p-4 space-y-3">
-      <div class="text-amber-400 text-lg font-bold flex items-center gap-2">
-        <i class="fa-solid fa-medal"></i>
-        <span>QUEST ACHIEVEMENTS</span>
+    <!-- SECTION 4: Rider Badges -->
+    <section class="moto-card p-3 space-y-2">
+      <div class="text-amber-400 text-xs font-hud font-bold tracking-widest flex items-center gap-1.5">
+        <i class="fa-solid fa-trophy"></i>
+        <span>RIDER BADGES</span>
       </div>
       <div class="grid grid-cols-3 gap-2 text-center text-xs">
-        <div id="badge-1" class="border-2 border-slate-700 p-2 opacity-40">
-          <i class="fa-solid fa-droplet text-lg block mb-1 text-cyan-400"></i>
-          <span>First Sip</span>
+        <div id="badge-1" class="border border-slate-800 p-2 opacity-30 rounded-xl bg-slate-900/50">
+          <i class="fa-solid fa-flag-checkered text-[#f25c05] text-sm block mb-1"></i>
+          <span class="font-bold text-[11px] block leading-tight">First Lap</span>
         </div>
-        <div id="badge-2" class="border-2 border-slate-700 p-2 opacity-40">
-          <i class="fa-solid fa-shield text-lg block mb-1 text-amber-400"></i>
-          <span>Halfway Hero</span>
+        <div id="badge-2" class="border border-slate-800 p-2 opacity-30 rounded-xl bg-slate-900/50">
+          <i class="fa-solid fa-gauge text-amber-400 text-sm block mb-1"></i>
+          <span class="font-bold text-[11px] block leading-tight">Half Cruiser</span>
         </div>
-        <div id="badge-3" class="border-2 border-slate-700 p-2 opacity-40">
-          <i class="fa-solid fa-crown text-lg block mb-1 text-yellow-400"></i>
-          <span>Hydration King</span>
+        <div id="badge-3" class="border border-slate-800 p-2 opacity-30 rounded-xl bg-slate-900/50">
+          <i class="fa-solid fa-crown text-yellow-400 text-sm block mb-1"></i>
+          <span class="font-bold text-[11px] block leading-tight">Iron Butt</span>
         </div>
       </div>
     </section>
 
-    <!-- NFC Tag Generator Tool -->
-    <section class="pixel-box-gold p-4 space-y-3">
-      <div class="text-amber-400 text-lg font-bold flex items-center gap-2">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-        <span>NFC TAG URL SPELL</span>
+    <!-- SECTION 5: Activity Log -->
+    <section class="moto-card p-3 space-y-2">
+      <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5 font-hud">
+        <span class="text-slate-300 font-bold">> RIDE_LOGS</span>
+        <button onclick="clearTodayHistory()" class="text-red-400 text-[10px] hover:underline font-mono">CLEAR TODAY</button>
+      </div>
+      <div id="history-list" class="space-y-1 text-xs max-h-24 overflow-y-auto font-mono">
+        <p class="text-slate-500 text-center py-2">No fuel logs recorded today.</p>
+      </div>
+    </section>
+
+    <!-- SECTION 6: NFC Configurator (Placed at the End) -->
+    <section class="moto-card-gold p-4 space-y-2">
+      <div class="text-amber-400 text-xs font-hud font-bold tracking-widest flex items-center gap-1.5">
+        <i class="fa-solid fa-nfc-symbol"></i>
+        <span>BOTTLE NFC CONFIGURATOR</span>
       </div>
       <div class="space-y-2 text-xs">
-        <div>
-          <label class="text-slate-400 block mb-1">Target ML per NFC Tap:</label>
-          <input type="number" id="nfc-ml" value="500" oninput="updateNfcUrl()" class="w-full bg-black border border-amber-500 p-2 text-amber-300 font-mono">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300 font-bold">ML per NFC Tap:</span>
+          <input type="number" id="nfc-ml" value="500" oninput="updateNfcUrl()" class="w-20 bg-slate-950 border border-amber-500/50 px-2 py-1 text-amber-300 font-hud text-center font-bold rounded-lg">
         </div>
-        <div>
-          <label class="text-slate-400 block mb-1">Generated URL for NFC Tools:</label>
-          <div class="flex gap-2">
-            <input type="text" id="nfc-output" readonly class="w-full bg-black border border-slate-600 p-2 text-slate-300 font-mono">
-            <button onclick="copyNfcUrl()" class="pixel-btn px-3 py-1 font-bold whitespace-nowrap">COPY</button>
-          </div>
+        <div class="flex gap-2">
+          <input type="text" id="nfc-output" readonly class="w-full bg-slate-950 border border-slate-800 px-3 py-1.5 text-slate-300 font-mono text-[10px] rounded-lg">
+          <button onclick="copyNfcUrl()" class="moto-btn px-3 py-1.5 font-hud font-bold text-xs whitespace-nowrap">COPY LINK</button>
         </div>
-      </div>
-    </section>
-
-    <!-- History Logs -->
-    <section class="pixel-box p-4 space-y-2">
-      <div class="flex justify-between items-center text-sm">
-        <span class="text-slate-300 font-bold">> BATTLE LOGS (TODAY)</span>
-        <button onclick="clearTodayHistory()" class="text-xs text-red-400 hover:underline">RESET</button>
-      </div>
-      <div id="history-list" class="space-y-1 text-xs max-h-36 overflow-y-auto font-mono">
-        <p class="text-slate-500 text-center py-2">No quest logs recorded today.</p>
       </div>
     </section>
 
@@ -212,51 +305,46 @@
 
   <script>
     let goal = 2500;
-    let logs = JSON.parse(localStorage.getItem('rpgWaterLogs')) || [];
+    let logs = JSON.parse(localStorage.getItem('kartikRoadsterLogs')) || [];
+    let chartInstance = null;
+    let currentChartMode = 'day';
 
-    // Chiptune Sound Generator (Web Audio API)
-    function playRetroSound(type) {
+    function playSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'square';
-
-        if (type === 'log') {
-          osc.frequency.setValueAtTime(300, ctx.currentTime);
-          osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
-          gain.gain.setValueAtTime(0.1, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.2);
-        } else if (type === 'levelup') {
-          osc.frequency.setValueAtTime(400, ctx.currentTime);
-          osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
-          osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
-          gain.gain.setValueAtTime(0.15, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.4);
-        }
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
       } catch (e) { console.log(e); }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Auto-Detect NFC parameters
+      // Hide ignition overlay after boot sequence
+      setTimeout(() => {
+        const loader = document.getElementById('ignition-loader');
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+      }, 1000);
+
+      // Auto-Log NFC Taps
       const params = new URLSearchParams(window.location.search);
       const mlParam = params.get('ml');
       if (mlParam) {
-        logWater(parseInt(mlParam), 'NFC Spell Tap');
+        logWater(parseInt(mlParam), 'NFC Tap');
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
         render();
       }
-
       updateNfcUrl();
+      initChart();
     });
 
     function getTodayTotal() {
@@ -268,37 +356,23 @@
       const total = getTodayTotal();
       document.getElementById('current-intake').innerText = total + ' ML';
 
-      // Percentage and Progress Bar
+      // Ring Offset Calculation (477 circumference)
       const pct = Math.min(Math.round((total / goal) * 100), 100);
-      document.getElementById('water-bar').style.width = pct + '%';
-      document.getElementById('percentage-text').innerText = pct + '%';
+      const offset = 477 - (477 * (pct / 100));
+      document.getElementById('gauge-bar').style.strokeDashoffset = offset;
+      document.getElementById('percentage-text').innerText = pct + '% FULFILLED';
 
-      // Level & XP Logic (1 ml = 1 XP, Level up every 500 XP)
-      const level = Math.floor(total / 500) + 1;
-      const currentLevelXp = total % 500;
-      document.getElementById('player-level').innerText = 'LVL ' + level;
-      document.getElementById('xp-text').innerText = `${currentLevelXp} / 500 XP`;
-      document.getElementById('xp-bar').style.width = `${(currentLevelXp / 500) * 100}%`;
-
-      // Hearts Container (5 Hearts max)
-      const heartCount = Math.min(Math.floor((total / goal) * 5), 5);
-      const heartsContainer = document.getElementById('hearts-container');
-      let heartsHtml = '';
-      for (let i = 0; i < 5; i++) {
-        if (i < heartCount) {
-          heartsHtml += '<i class="fa-solid fa-heart text-red-500"></i>';
-        } else {
-          heartsHtml += '<i class="fa-regular fa-heart text-slate-600"></i>';
-        }
-      }
-      heartsContainer.innerHTML = heartsHtml;
+      // Gear Rank
+      const gear = Math.min(Math.floor(total / 500) + 1, 6);
+      document.getElementById('rider-rank').innerText = 'GEAR ' + gear;
 
       // Badges
-      if (total >= 250) document.getElementById('badge-1').className = 'border-2 border-cyan-400 p-2 bg-cyan-950/40';
-      if (total >= 1250) document.getElementById('badge-2').className = 'border-2 border-amber-400 p-2 bg-amber-950/40';
-      if (total >= 2500) document.getElementById('badge-3').className = 'border-2 border-yellow-400 p-2 bg-yellow-950/40';
+      if (total >= 250) document.getElementById('badge-1').className = 'border border-[#f25c05] p-2 rounded-xl bg-[#f25c05]/20 opacity-100 shadow-[0_0_10px_rgba(242,92,5,0.4)]';
+      if (total >= 1250) document.getElementById('badge-2').className = 'border border-amber-400 p-2 rounded-xl bg-amber-950/40 opacity-100 shadow-[0_0_10px_rgba(245,158,11,0.3)]';
+      if (total >= 2500) document.getElementById('badge-3').className = 'border border-yellow-400 p-2 rounded-xl bg-yellow-950/40 opacity-100 shadow-[0_0_10px_rgba(234,179,8,0.3)]';
 
       renderLogs();
+      updateChart();
     }
 
     function renderLogs() {
@@ -307,29 +381,28 @@
       const todayLogs = logs.filter(l => new Date(l.t).toDateString() === today).reverse();
 
       if (todayLogs.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-center py-2">No quest logs recorded today.</p>';
+        container.innerHTML = '<p class="text-slate-500 text-center py-2">No fuel logs recorded today.</p>';
         return;
       }
 
       container.innerHTML = todayLogs.map(l => {
         const time = new Date(l.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return `<div class="flex justify-between border-b border-slate-800 py-1">
-          <span class="text-cyan-300">+${l.a} ML (${l.source})</span>
+        return `<div class="flex justify-between border-b border-slate-800/80 py-1">
+          <span class="text-[#f25c05]">+${l.a} ML <span class="text-slate-500">(${l.source})</span></span>
           <span class="text-slate-500">${time}</span>
         </div>`;
       }).join('');
     }
 
-    function logWater(amount, source = 'Potion') {
-      logs.push({ a: amount, t: new Date(), source });
-      localStorage.setItem('rpgWaterLogs', JSON.stringify(logs));
+    function logWater(amount, source = 'Manual') {
+      logs.push({ a: amount, t: new Date().toISOString(), source });
+      localStorage.setItem('kartikRoadsterLogs', JSON.stringify(logs));
       
-      playRetroSound('log');
-      showToast(`+${amount} XP RECOVERY!`);
+      playSound();
+      showToast(`+${amount} ML FUEL ADDED!`);
       render();
 
       if (getTodayTotal() >= goal) {
-        playRetroSound('levelup');
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
     }
@@ -338,7 +411,7 @@
       const input = document.getElementById('custom-ml');
       const amount = parseInt(input.value);
       if (!isNaN(amount) && amount > 0) {
-        logWater(amount, 'Custom Spell');
+        logWater(amount, 'Custom Refuel');
         input.value = '';
       }
     }
@@ -346,9 +419,9 @@
     function clearTodayHistory() {
       const today = new Date().toDateString();
       logs = logs.filter(l => new Date(l.t).toDateString() !== today);
-      localStorage.setItem('rpgWaterLogs', JSON.stringify(logs));
+      localStorage.setItem('kartikRoadsterLogs', JSON.stringify(logs));
       render();
-      showToast('QUEST REBOOTED!');
+      showToast('TODAY\'S LOGS CLEARED');
     }
 
     function updateNfcUrl() {
@@ -361,14 +434,108 @@
       const output = document.getElementById('nfc-output');
       output.select();
       navigator.clipboard.writeText(output.value);
-      showToast('SPELL URL COPIED!');
+      showToast('NFC LINK COPIED!');
     }
 
     function showToast(msg) {
       const toast = document.getElementById('toast');
       document.getElementById('toast-message').innerText = msg;
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 2000);
+      setTimeout(() => toast.classList.add('hidden'), 2200);
+    }
+
+    /* REAL DATA CHARTING ENGINE (NO FAKE/PLACEHOLDER DATA) */
+    function initChart() {
+      const ctx = document.getElementById('telemetryChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Water Intake (ML)',
+            data: [],
+            backgroundColor: '#f25c05',
+            borderColor: '#ff7a00',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#94a3b8', font: { family: 'Orbitron', size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8', font: { family: 'Orbitron', size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+          }
+        }
+      });
+      updateChart();
+    }
+
+    function setChartMode(mode) {
+      currentChartMode = mode;
+      ['day', 'week', 'month'].forEach(m => {
+        const btn = document.getElementById(`btn-${m}`);
+        if (m === mode) {
+          btn.className = "px-2.5 py-1 bg-[#f25c05] text-white rounded-lg";
+        } else {
+          btn.className = "px-2.5 py-1 bg-slate-800 text-slate-300 rounded-lg";
+        }
+      });
+      updateChart();
+    }
+
+    function updateChart() {
+      if (!chartInstance) return;
+
+      let labels = [];
+      let data = [];
+
+      if (currentChartMode === 'day') {
+        labels = ['Morning', 'Afternoon', 'Evening', 'Night'];
+        data = [0, 0, 0, 0];
+        
+        const todayStr = new Date().toDateString();
+        logs.filter(l => new Date(l.t).toDateString() === todayStr).forEach(l => {
+          const hour = new Date(l.t).getHours();
+          if (hour >= 5 && hour < 12) data[0] += l.a;
+          else if (hour >= 12 && hour < 17) data[1] += l.a;
+          else if (hour >= 17 && hour < 21) data[2] += l.a;
+          else data[3] += l.a;
+        });
+
+      } else if (currentChartMode === 'week') {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+
+          const dayStr = d.toDateString();
+          const dayTotal = logs.filter(l => new Date(l.t).toDateString() === dayStr).reduce((sum, l) => sum + l.a, 0);
+          data.push(dayTotal);
+        }
+
+      } else if (currentChartMode === 'month') {
+        labels = ['3 Wks Ago', '2 Wks Ago', 'Last Wk', 'This Wk'];
+        data = [0, 0, 0, 0];
+        
+        const now = new Date().getTime();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+
+        logs.forEach(l => {
+          const logTime = new Date(l.t).getTime();
+          const diff = now - logTime;
+          if (diff < oneWeek) data[3] += l.a;
+          else if (diff < 2 * oneWeek) data[2] += l.a;
+          else if (diff < 3 * oneWeek) data[1] += l.a;
+          else if (diff < 4 * oneWeek) data[0] += l.a;
+        });
+      }
+
+      chartInstance.data.labels = labels;
+      chartInstance.data.datasets[0].data = data;
+      chartInstance.update();
     }
   </script>
 </body>
