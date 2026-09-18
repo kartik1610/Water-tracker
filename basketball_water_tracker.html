@@ -63,23 +63,11 @@
             border-right: 2px solid #ff6b00;
         }
 
-        /* Glowing Accent Text & Borders */
         .text-orange-glow {
             color: #ff6b00;
             text-shadow: 0 0 10px rgba(255, 107, 0, 0.6), 0 0 20px rgba(255, 107, 0, 0.3);
         }
 
-        .border-orange-glow {
-            border-color: #ff6b00;
-            box-shadow: 0 0 10px rgba(255, 107, 0, 0.4);
-        }
-
-        .bg-orange-glow {
-            background-color: #ff6b00;
-            box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
-        }
-
-        /* Interactive Action Buttons */
         .btn-action {
             background: linear-gradient(135deg, rgba(255, 107, 0, 0.2) 0%, rgba(180, 50, 0, 0.4) 100%);
             border: 1px solid #ff6b00;
@@ -97,7 +85,6 @@
             transform: translateY(0);
         }
 
-        /* Filter Tabs */
         .tab-btn {
             background: rgba(30, 35, 45, 0.8);
             border: 1px solid rgba(255, 107, 0, 0.2);
@@ -113,7 +100,16 @@
             border-color: #ff6b00;
         }
 
-        /* Custom Scrollbar */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .toast-active {
+            animation: fadeInOut 2.5s forwards;
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -128,7 +124,13 @@
 </head>
 <body class="p-3 md:p-6 flex justify-center items-center">
 
-    <div class="w-full max-w-2xl flex flex-col gap-4">
+    <div class="w-full max-w-2xl flex flex-col gap-4 relative">
+
+        <!-- Notification Toast -->
+        <div id="toast" class="hidden fixed top-4 right-4 z-50 bg-orange-600 text-black font-orbitron font-bold text-lg px-4 py-2 rounded shadow-[0_0_20px_rgba(255,107,0,0.8)] border border-amber-300 flex items-center gap-2">
+            <i class="fa-solid fa-basketball"></i>
+            <span id="toastMsg">SHOT SCORED!</span>
+        </div>
 
         <!-- HEADER SECTION -->
         <div class="hud-card p-4 flex justify-between items-center bg-black/60">
@@ -155,7 +157,7 @@
             <div class="flex justify-between items-center text-xs font-orbitron text-orange-400/80 tracking-wider">
                 <span>[ HYDRO_CORE_TELEMETRY ]</span>
                 <span class="text-xs text-red-500 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> LIVE
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span> LIVE
                 </span>
             </div>
 
@@ -183,47 +185,26 @@
             <!-- Progress Bar -->
             <div class="w-full bg-slate-900/90 border border-orange-500/30 rounded-full h-5 p-0.5 relative overflow-hidden">
                 <div id="progressBar" class="bg-gradient-to-r from-orange-600 to-amber-400 h-full rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.8)]" style="width: 0%"></div>
-                <span id="progressPercentage" class="absolute inset-0 flex items-center justify-center text-xs font-orbitron font-bold text-white drop-shadow">0%</span>
-            </div>
-        </div>
-
-        <!-- GAME TELEMETRY CHART SECTION -->
-        <div class="hud-card p-4 flex flex-col gap-3">
-            <div class="flex justify-between items-center">
-                <div class="text-sm font-orbitron text-orange-400/80 tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-chart-simple text-orange-500"></i> GAME TELEMETRY
-                </div>
-                <!-- Timeframe Selectors -->
-                <div class="flex gap-1 font-orbitron text-sm">
-                    <button onclick="setChartTimeframe('day')" id="btnDay" class="tab-btn px-3 py-0.5 rounded active">DAY</button>
-                    <button onclick="setChartTimeframe('week')" id="btnWeek" class="tab-btn px-3 py-0.5 rounded">WEEK</button>
-                    <button onclick="setChartTimeframe('month')" id="btnMonth" class="tab-btn px-3 py-0.5 rounded">MONTH</button>
-                </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-slate-900/90 border border-orange-500/30 rounded-full h-5 p-0.5 relative overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-orange-600 to-amber-400 h-full rounded-full transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.8)]" style="width: 0%"></div>
                 <span id="progressPercentage" class="absolute inset-0 flex items-center justify-center text-[10px] font-orbitron font-bold text-white drop-shadow">0%</span>
             </div>
         </div>
 
         <!-- GAME TELEMETRY CHART SECTION -->
         <div class="hud-card p-4 flex flex-col gap-3">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center flex-wrap gap-2">
                 <div class="text-xs font-orbitron text-orange-400/80 tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-chart-simple text-orange-500"></i> GAME TELEMETRY
                 </div>
                 <!-- Timeframe Selectors -->
                 <div class="flex gap-1 font-orbitron text-xs">
-                    <button onclick="setChart Timeframe('day')" id="btnDay" class="tab-btn px-3 py-1 rounded active">DAY</button>
-                    <button onclick="setChartTimeframe('week')" id="btnWeek" class="tab-btn px-3 py-1 rounded">WEEK</button>
-                    <button onclick="setChartTimeframe('month')" id="btnMonth" class="tab-btn px-3 py-1 rounded">MONTH</button>
+                    <button onclick="setChartTimeframe('day')" id="btnDay" class="tab-btn px-3 py-1 rounded active cursor-pointer">DAY</button>
+                    <button onclick="setChartTimeframe('week')" id="btnWeek" class="tab-btn px-3 py-1 rounded cursor-pointer">WEEK</button>
+                    <button onclick="setChartTimeframe('month')" id="btnMonth" class="tab-btn px-3 py-1 rounded cursor-pointer">MONTH</button>
                 </div>
             </div>
 
             <!-- Chart Container -->
-            <div class="relative w-full h-48 md:h-56">
+            <div class="relative w-full h-52 md:h-60">
                 <canvas id="telemetryChart"></canvas>
             </div>
         </div>
@@ -236,31 +217,31 @@
 
             <div class="grid grid-cols-3 gap-2">
                 <!-- Free Throw -->
-                <button onclick="addWater(250, 'FREE THROW')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group">
+                <button onclick="addWater(250, 'FREE THROW')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group cursor-pointer">
                     <i class="fa-solid fa-glass-water text-orange-400 group-hover:text-black mb-1 text-lg"></i>
                     <span class="font-orbitron font-bold text-sm text-white group-hover:text-black">+250 ML</span>
                     <span class="text-[10px] text-orange-300 group-hover:text-black tracking-wider uppercase font-semibold">FREE THROW</span>
                 </button>
 
                 <!-- Mid-Range -->
-                <button onclick="addWater(500, 'MID-RANGE')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group">
+                <button onclick="addWater(500, 'JUMP SHOT')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group cursor-pointer">
                     <i class="fa-solid fa-bottle-water text-orange-400 group-hover:text-black mb-1 text-lg"></i>
                     <span class="font-orbitron font-bold text-sm text-white group-hover:text-black">+500 ML</span>
-                    <span class="text-[10px] text-orange-300 group-hover:text-black tracking-wider uppercase font-semibold">MID-RANGE</span>
+                    <span class="text-[10px] text-orange-300 group-hover:text-black tracking-wider uppercase font-semibold">JUMP SHOT</span>
                 </button>
 
                 <!-- Three-Pointer -->
-                <button onclick="addWater(750, 'THREE-POINTER')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group">
+                <button onclick="addWater(750, 'SLAM DUNK')" class="btn-action p-3 rounded flex flex-col items-center justify-center text-center group cursor-pointer">
                     <i class="fa-solid fa-faucet-drip text-orange-400 group-hover:text-black mb-1 text-lg"></i>
                     <span class="font-orbitron font-bold text-sm text-white group-hover:text-black">+750 ML</span>
-                    <span class="text-[10px] text-orange-300 group-hover:text-black tracking-wider uppercase font-semibold">3-POINTER</span>
+                    <span class="text-[10px] text-orange-300 group-hover:text-black tracking-wider uppercase font-semibold">SLAM DUNK</span>
                 </button>
             </div>
 
             <!-- Custom Refuel Input -->
             <div class="flex gap-2 mt-1">
-                <input type="number" id="customWaterInput" placeholder="Custom Refuel ML..." class="bg-black/60 border border-orange-500/30 text-white font-orbitron px-3 py-2 rounded w-full text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                <button onclick="addCustomWater()" class="btn-action px-5 py-2 rounded font-orbitron font-bold text-xs text-white whitespace-nowrap">
+                <input type="number" id="customWaterInput" placeholder="Custom Refuel ML..." min="1" max="5000" class="bg-black/60 border border-orange-500/30 text-white font-orbitron px-3 py-2 rounded w-full text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+                <button onclick="addCustomWater()" class="btn-action px-5 py-2 rounded font-orbitron font-bold text-xs text-white whitespace-nowrap cursor-pointer">
                     + REFUEL
                 </button>
             </div>
@@ -276,14 +257,14 @@
                 <!-- Badge 1 -->
                 <div id="badge1" class="border border-slate-800 bg-slate-900/50 p-2.5 rounded text-center opacity-40 transition-all duration-300">
                     <i class="fa-solid fa-basketball text-orange-500 text-lg mb-1 block"></i>
-                    <div class="font-orbitron text-xs font-bold text-white">First Shot</div>
+                    <div class="font-orbitron text-xs font-bold text-white">First Quarter</div>
                     <div class="text-[9px] text-slate-400">250 ML</div>
                 </div>
 
                 <!-- Badge 2 -->
                 <div id="badge2" class="border border-slate-800 bg-slate-900/50 p-2.5 rounded text-center opacity-40 transition-all duration-300">
                     <i class="fa-solid fa-bolt text-amber-400 text-lg mb-1 block"></i>
-                    <div class="font-orbitron text-xs font-bold text-white">Half Time</div>
+                    <div class="font-orbitron text-xs font-bold text-white">Halftime Hydro</div>
                     <div class="text-[9px] text-slate-400">1250 ML</div>
                 </div>
 
@@ -296,11 +277,11 @@
             </div>
         </div>
 
-        <!-- COURT LOGS -->
+        <!-- COURTSIDE LOGS -->
         <div class="hud-card p-4 flex flex-col gap-2">
             <div class="flex justify-between items-center text-xs font-orbitron">
-                <span class="text-orange-400/80 tracking-wider">&gt; COURT_LOGS</span>
-                <button onclick="purgeLogs()" class="text-red-400 hover:text-red-300 tracking-wider text-[11px] font-bold">PURGE TODAY</button>
+                <span class="text-orange-400/80 tracking-wider">&gt; COURTSIDE_LOGS</span>
+                <button onclick="purgeLogs()" class="text-red-400 hover:text-red-300 tracking-wider text-[11px] font-bold cursor-pointer">PURGE ALL</button>
             </div>
 
             <div id="logContainer" class="max-h-36 overflow-y-auto pr-1 flex flex-col gap-1.5 text-xs font-orbitron mt-1">
@@ -311,50 +292,229 @@
     </div>
 
     <script>
-        // State Variables
-        let currentIntake = 0;
-        const targetCapacity = 2500;
-        let logs = [];
+        const TARGET_CAPACITY = 2500;
         let activeTimeframe = 'day';
         let telemetryChart = null;
 
-        // Sample initial chart data models
-        const chartDatasets = {
-            day: {
-                labels: ['Q1 (Morn)', 'Q2 (Noon)', 'Q3 (Eve)', 'Q4 (Night)'],
-                data: [350, 600, 400, 0]
-            },
-            week: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                data: [2100, 2500, 1800, 2400, 2500, 1350, 0]
-            },
-            month: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                data: [16500, 17200, 15800, 6200]
-            }
-        };
+        // Persisted Water Logs (Stored in LocalStorage)
+        let waterLogs = JSON.parse(localStorage.getItem('gurditt_water_logs') || '[]');
 
-        // Initialize App
         window.onload = function() {
             initChart();
             updateUI();
         };
 
+        function playScoreSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+                osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.25);
+
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        function addWater(amount, shotType) {
+            const now = new Date();
+            const logEntry = {
+                id: Date.now(),
+                timestamp: now.toISOString(),
+                amount: parseInt(amount),
+                type: shotType
+            };
+
+            waterLogs.unshift(logEntry);
+            saveLogs();
+            playScoreSound();
+            showToast(`+${amount} ML ${shotType}!`);
+            updateUI();
+        }
+
+        function addCustomWater() {
+            const input = document.getElementById('customWaterInput');
+            const amount = parseInt(input.value);
+            if (!isNaN(amount) && amount > 0) {
+                addWater(amount, 'CUSTOM REFUEL');
+                input.value = '';
+            }
+        }
+
+        function removeLog(id) {
+            waterLogs = waterLogs.filter(item => item.id !== id);
+            saveLogs();
+            updateUI();
+        }
+
+        function purgeLogs() {
+            if (waterLogs.length === 0) return;
+            waterLogs = [];
+            saveLogs();
+            updateUI();
+            showToast('LOGS PURGED');
+        }
+
+        function saveLogs() {
+            localStorage.setItem('gurditt_water_logs', JSON.stringify(waterLogs));
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            msg.innerText = message;
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-active');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('toast-active');
+            }, 2500);
+        }
+
+        function isToday(dateObj) {
+            const today = new Date();
+            return dateObj.getDate() === today.getDate() &&
+                   dateObj.getMonth() === today.getMonth() &&
+                   dateObj.getFullYear() === today.getFullYear();
+        }
+
+        function getTodayIntake() {
+            return waterLogs.reduce((sum, log) => {
+                const d = new Date(log.timestamp);
+                return isToday(d) ? sum + log.amount : sum;
+            }, 0);
+        }
+
+        /* Calculate Chart Data dynamically based on timeframe */
+        function calculateChartData(timeframe) {
+            const now = new Date();
+
+            if (timeframe === 'day') {
+                const labels = ['Morning (6-12)', 'Afternoon (12-17)', 'Evening (17-21)', 'Night (21-6)'];
+                const data = [0, 0, 0, 0];
+
+                waterLogs.forEach(log => {
+                    const d = new Date(log.timestamp);
+                    if (isToday(d)) {
+                        const hrs = d.getHours();
+                        if (hrs >= 6 && hrs < 12) data[0] += log.amount;
+                        else if (hrs >= 12 && hrs < 17) data[1] += log.amount;
+                        else if (hrs >= 17 && hrs < 21) data[2] += log.amount;
+                        else data[3] += log.amount;
+                    }
+                });
+
+                return { labels, data };
+            } 
+            else if (timeframe === 'week') {
+                const labels = [];
+                const data = [0, 0, 0, 0, 0, 0, 0];
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+                for (let i = 6; i >= 0; i--) {
+                    const targetDate = new Date();
+                    targetDate.setDate(now.getDate() - i);
+                    labels.push(i === 0 ? 'Today' : dayNames[targetDate.getDay()]);
+                }
+
+                waterLogs.forEach(log => {
+                    const d = new Date(log.timestamp);
+                    const diffTime = Math.abs(now - d);
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays >= 0 && diffDays < 7) {
+                        const index = 6 - diffDays;
+                        if (index >= 0 && index < 7) {
+                            data[index] += log.amount;
+                        }
+                    }
+                });
+
+                return { labels, data };
+            } 
+            else if (timeframe === 'month') {
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                
+                // Find earliest log date or default to current month
+                let startYear = now.getFullYear();
+                let startMonth = now.getMonth();
+
+                if (waterLogs.length > 0) {
+                    let earliestTimestamp = waterLogs.reduce((earliest, log) => {
+                        const time = new Date(log.timestamp).getTime();
+                        return time < earliest ? time : earliest;
+                    }, new Date(waterLogs[0].timestamp).getTime());
+
+                    const earliestDate = new Date(earliestTimestamp);
+                    startYear = earliestDate.getFullYear();
+                    startMonth = earliestDate.getMonth();
+                }
+
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+
+                const labels = [];
+                const monthlySums = {};
+
+                // Generate month buckets from start date up to current month with MMM-YY formatting (e.g., Jan-26)
+                let y = startYear;
+                let m = startMonth;
+
+                while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+                    const key = `${y}-${m}`;
+                    const yearShort = String(y).slice(-2);
+                    const labelStr = `${monthNames[m]}-${yearShort}`;
+                    labels.push(labelStr);
+                    monthlySums[key] = { label: labelStr, total: 0 };
+
+                    m++;
+                    if (m > 11) {
+                        m = 0;
+                        y++;
+                    }
+                }
+
+                // Populate dynamic monthly totals from actual logged water intake
+                waterLogs.forEach(log => {
+                    const d = new Date(log.timestamp);
+                    const key = `${d.getFullYear()}-${d.getMonth()}`;
+                    if (monthlySums[key] !== undefined) {
+                        monthlySums[key].total += log.amount;
+                    }
+                });
+
+                const data = Object.keys(monthlySums).map(k => monthlySums[k].total);
+
+                return { labels, data };
+            }
+        }
+
         function initChart() {
             const ctx = document.getElementById('telemetryChart').getContext('2d');
             
-            // Gradient fill for basketball orange
             const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-            gradient.addColorStop(0, 'rgba(255, 107, 0, 0.8)');
-            gradient.addColorStop(1, 'rgba(255, 107, 0, 0.05)');
+            gradient.addColorStop(0, 'rgba(255, 107, 0, 0.85)');
+            gradient.addColorStop(1, 'rgba(255, 107, 0, 0.08)');
+
+            const initialData = calculateChartData('day');
 
             telemetryChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: chartDatasets[activeTimeframe].labels,
+                    labels: initialData.labels,
                     datasets: [{
-                        label: 'Water Intake (ML)',
-                        data: chartDatasets[activeTimeframe].data,
+                        label: 'Hydration Intake',
+                        data: initialData.data,
                         backgroundColor: gradient,
                         borderColor: '#ff6b00',
                         borderWidth: 1.5,
@@ -368,14 +528,14 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(10, 12, 16, 0.9)',
+                            backgroundColor: 'rgba(10, 12, 16, 0.95)',
                             titleFont: { family: 'Teko', size: 16 },
                             bodyFont: { family: 'Barlow', size: 14 },
                             borderColor: '#ff6b00',
                             borderWidth: 1,
                             displayColors: false,
                             callbacks: {
-                                label: (context) => ` ${context.raw} ML`
+                                label: (context) => ` ${context.raw} ML logged`
                             }
                         }
                     },
@@ -385,7 +545,8 @@
                             ticks: { color: '#8a99ad', font: { family: 'Teko', size: 14 } }
                         },
                         y: {
-                            grid: { color: 'rgba(255, 107, 0, 0.08)' },
+                            grid: { color: 'rgba(255, 107, 0, 0.1)' },
+                            beginAtZero: true,
                             ticks: { color: '#8a99ad', font: { family: 'Teko', size: 14 } }
                         }
                     }
@@ -393,72 +554,34 @@
             });
         }
 
-        // Switch Chart View (Day / Week / Month)
         function setChartTimeframe(timeframe) {
             activeTimeframe = timeframe;
             
-            // Toggle active classes on buttons
             document.getElementById('btnDay').classList.toggle('active', timeframe === 'day');
             document.getElementById('btnWeek').classList.toggle('active', timeframe === 'week');
             document.getElementById('btnMonth').classList.toggle('active', timeframe === 'month');
 
-            // Update Chart
-            telemetryChart.data.labels = chartDatasets[timeframe].labels;
-            telemetryChart.data.datasets[0].data = chartDatasets[timeframe].data;
+            updateChart();
+        }
+
+        function updateChart() {
+            if (!telemetryChart) return;
+            const chartData = calculateChartData(activeTimeframe);
+            telemetryChart.data.labels = chartData.labels;
+            telemetryChart.data.datasets[0].data = chartData.data;
             telemetryChart.update();
         }
 
-        function addWater(amount, shotType) {
-            currentIntake += amount;
-            
-            // Record Log
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            logs.unshift({
-                time: timeStr,
-                amount: amount,
-                type: shotType
-            });
-
-            // Dynamically update today's Q3/Q4 telemetry chart bucket
-            chartDatasets.day.data[2] += amount;
-            if (activeTimeframe === 'day') {
-                telemetryChart.data.datasets[0].data = chartDatasets.day.data;
-                telemetryChart.update();
-            }
-
-            updateUI();
-        }
-
-        function addCustomWater() {
-            const input = document.getElementById('customWaterInput');
-            const amount = parseInt(input.value);
-            if (!isNaN(amount) && amount > 0) {
-                addWater(amount, 'SLAM DUNK');
-                input.value = '';
-            }
-        }
-
-        function purgeLogs() {
-            currentIntake = 0;
-            logs = [];
-            chartDatasets.day.data[2] = 0;
-            if (activeTimeframe === 'day') {
-                telemetryChart.data.datasets[0].data = chartDatasets.day.data;
-                telemetryChart.update();
-            }
-            updateUI();
-        }
-
         function updateUI() {
-            // Update Text Readouts
-            document.getElementById('currentIntakeDisplay').innerText = currentIntake;
-            
-            // Calculate Percentage
-            const percentage = Math.min(Math.round((currentIntake / targetCapacity) * 100), 100);
+            const todayIntake = getTodayIntake();
+
+            document.getElementById('currentIntakeDisplay').innerText = todayIntake;
+            document.getElementById('targetCapacityDisplay').innerText = TARGET_CAPACITY;
+
+            const percentage = Math.min(Math.round((todayIntake / TARGET_CAPACITY) * 100), 100);
             document.getElementById('progressBar').style.width = percentage + '%';
             document.getElementById('progressPercentage').innerText = percentage + '%';
 
-            // Update Segmented Telemetry Lights
             const segments = document.getElementById('telemetrySegments').children;
             const filledCount = Math.floor((percentage / 100) * segments.length);
             
@@ -470,12 +593,11 @@
                 }
             }
 
-            // Update Achievements Badges
-            updateBadge('badge1', currentIntake >= 250);
-            updateBadge('badge2', currentIntake >= 1250);
-            updateBadge('badge3', currentIntake >= 2500);
+            updateBadge('badge1', todayIntake >= 250);
+            updateBadge('badge2', todayIntake >= 1250);
+            updateBadge('badge3', todayIntake >= 2500);
 
-            // Render Logs List
+            updateChart();
             renderLogs();
         }
 
@@ -492,20 +614,32 @@
 
         function renderLogs() {
             const container = document.getElementById('logContainer');
-            if (logs.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-4 italic">No hydration plays recorded today.</div>`;
+            
+            if (waterLogs.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-center py-4 italic">No hydration plays recorded yet. Log your first shot!</div>`;
                 return;
             }
 
-            container.innerHTML = logs.map(log => `
-                <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border-l-2 border-orange-500">
-                    <div class="flex items-center gap-2">
-                        <span class="text-orange-400 font-bold">+${log.amount} ML</span>
-                        <span class="text-[10px] text-slate-400 uppercase bg-slate-800 px-1.5 py-0.5 rounded">${log.type}</span>
+            container.innerHTML = waterLogs.map(log => {
+                const dateObj = new Date(log.timestamp);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = isToday(dateObj) ? 'Today' : `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+
+                return `
+                    <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border-l-2 border-orange-500">
+                        <div class="flex items-center gap-2">
+                            <span class="text-orange-400 font-bold text-sm">+${log.amount} ML</span>
+                            <span class="text-[10px] text-slate-300 uppercase bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">${log.type}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-400">${dateStr} ${timeStr}</span>
+                            <button onclick="removeLog(${log.id})" class="text-slate-500 hover:text-red-400 text-xs px-1 cursor-pointer" title="Delete Log">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                     </div>
-                    <span class="text-[10px] text-slate-500">${log.time}</span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
     </script>
 </body>
